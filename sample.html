@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Doodle Classifier</title>
+    
+    <!-- p5.js and p5.sound.js libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #f0f0f0;
+      }
+      
+      canvas {
+        display: block;
+        border: 2px solid black;
+      }
+      
+      div, button {
+        margin: 4px 8px;
+        padding: 8px;
+        color: white;
+        border-radius: 8px;
+        font-family: Arial, sans-serif;
+      }
+      
+      div {
+        background: darkblue;
+        font-size: 16px;
+        width: fit-content;
+      }
+      
+      button {
+        background: skyblue;
+        font-size: 18px;
+        margin-top: 8px;
+        border: none;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: deepskyblue;
+      }
+
+      #guesses {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Guesses Display Area -->
+    <div id="guesses">
+      <div id="guess1">line</div>
+      <div id="guess2">snowman</div>
+      <div id="guess3">tree</div>
+    </div>
+
+    <!-- p5.js Sketch -->
+    <script>
+      let canvas;
+      let clearButton;
+
+      let guessCount = 3;
+      let guesses;
+
+      let doodleClassifier;
+
+      function setup() {
+        // Create canvas
+        canvas = createCanvas(400, 400);
+        background(220);
+
+        // Create clear button
+        clearButton = createButton("Clear Canvas");
+        clearButton.mouseClicked(clearCanvas);
+        clearButton.position(420, 50);
+        
+        // Setup the guesses array
+        guesses = [];
+        for (let i = 0; i < guessCount; i++) {
+          let guess = createDiv();
+          guesses.push(guess);
+          guess.position(20, 60 + i * 30);
+        }
+        
+        // Initialize the ML model (DoodleNet)
+        doodleClassifier = ml5.imageClassifier("DoodleNet", modelReady);
+      }
+
+      function modelReady() {
+        // Start classifying the doodles once the model is ready
+        doodleClassifier.classify(canvas, gotResults);
+      }
+
+      function gotResults(error, results) {
+        if (error) {
+          console.log("An error occurred");
+          return;
+        }
+
+        // Update guess information for each guess div
+        for (let i = 0; i < guesses.length; i++) {
+          let label = results[i].label;
+          let confidence = (results[i].confidence * 100).toFixed(2);
+          let guess = guesses[i];
+          guess.html(label + ' - ' + confidence + '% confidence');
+        }
+
+        // Continue classifying
+        doodleClassifier.classify(canvas, gotResults);
+      }
+
+      function clearCanvas() {
+        // Clear the canvas
+        background(220);
+      }
+
+      function mouseDragged() {
+        // Draw on the canvas as the mouse is dragged
+        stroke(0);
+        strokeWeight(16);
+        line(pmouseX, pmouseY, mouseX, mouseY);
+      }
+
+      function draw() {
+        // The main loop does nothing in this case, since we're handling mouseDragged
+      }
+    </script>
+  </body>
+</html>
